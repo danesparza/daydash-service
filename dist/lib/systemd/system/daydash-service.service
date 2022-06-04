@@ -1,0 +1,12 @@
+[Unit]
+Description=daydash-service service
+
+[Service]
+User=root
+Group=root
+ExecStart=/usr/bin/daydash-service start --config=/etc/daydash-service/config.yaml
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

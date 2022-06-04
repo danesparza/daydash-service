@@ -1,0 +1,7 @@
+Package: daydash-service
+Version: 1.0.{build}
+Architecture: amd64
+Maintainer: Dan Esparza <esparza.dan@gmail.com>
+Installed-Size: 4500
+Homepage: https://github.com/danesparza/daydash-service
+Description: REST data collector service for daydash  
