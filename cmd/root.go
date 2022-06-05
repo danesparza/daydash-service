@@ -69,7 +69,7 @@ func initConfig() {
 	viper.AutomaticEnv() // read in environment variables that match
 
 	//	Set our defaults
-	viper.SetDefault("server.port", "3010")
+	viper.SetDefault("server.port", "80")
 	viper.SetDefault("server.allowed-origins", "*")
 	viper.SetDefault("log.level", "info")
 

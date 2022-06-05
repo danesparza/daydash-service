@@ -6,8 +6,10 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	// _ "github.com/danesparza/daydash-service/docs" // swagger docs location
+	"github.com/danesparza/daydash-service/api"
 	"github.com/danesparza/daydash-service/telemetry"
 	"github.com/gorilla/mux"
 	"github.com/newrelic/go-agent/v3/integrations/nrgorilla"
@@ -49,11 +51,9 @@ func start(cmd *cobra.Command, args []string) {
 	)
 
 	//	Create an api service object
-	/*
-		apiService := api.Service{
-			StartTime: time.Now(),
-		}
-	*/
+	apiService := api.Service{
+		StartTime: time.Now(),
+	}
 
 	//	Trap program exit appropriately
 	ctx, cancel := context.WithCancel(context.Background())
@@ -65,32 +65,24 @@ func start(cmd *cobra.Command, args []string) {
 	restRouter := mux.NewRouter()
 	restRouter.Use(nrgorilla.Middleware(telemetry.NRApp))
 
-	//	MAP ROUTES
-	/*
-		restRouter.HandleFunc("/v1/image/map/{lat},{long}", apiService.GetMapImageForCoordinates).Methods("GET")        // Get the map at the given coordinates and default zoom
-		restRouter.HandleFunc("/v1/image/map/{lat},{long}/{zoom}", apiService.GetMapImageForCoordinates).Methods("GET") // Get the map at the given coordinates
-
-		//	CONFIG ROUTES
-		restRouter.HandleFunc("/v1/config", apiService.GetConfig).Methods("GET")  // Get config
-		restRouter.HandleFunc("/v1/config", apiService.SetConfig).Methods("POST") // Update config
-
-		//	DASHBOARD DATA ROUTES
-		restRouter.HandleFunc("/v1/dashboard/pollen", apiService.GetPollen).Methods("GET")           // Get pollen data
-		restRouter.HandleFunc("/v1/dashboard/weather", apiService.GetWeather).Methods("GET")         // Get weather data
-		restRouter.HandleFunc("/v1/dashboard/nwsalerts", apiService.GetWeatherAlerts).Methods("GET") // Get weather alerts data
-		restRouter.HandleFunc("/v1/dashboard/news", apiService.GetNews).Methods("GET")               // Get breaking news
-		restRouter.HandleFunc("/v1/dashboard/calendar", apiService.GetCalendar).Methods("GET")       // Get calendar data
-		restRouter.HandleFunc("/v1/dashboard/earthquakes", apiService.GetEarthquakes).Methods("GET") // Get earthquake data
-
-		restRouter.HandleFunc("/v1/dashboard/zipgeo/{zipcode}", apiService.GetGeoForZipcode).Methods("GET") // Get lat/long for a zipcode
-	*/
+	//	DATA ROUTES
+	restRouter.HandleFunc("/v2/alerts", apiService.GetCalendar).Methods("POST")   // Get weather alerts data
+	restRouter.HandleFunc("/v2/calendar", apiService.GetCalendar).Methods("POST") // Get calendar data
+	restRouter.HandleFunc("/v2/mapimage", apiService.GetCalendar).Methods("POST") // Get map data
+	restRouter.HandleFunc("/v2/news", apiService.GetCalendar).Methods("POST")     // Get news data
+	restRouter.HandleFunc("/v2/pollen", apiService.GetCalendar).Methods("POST")   // Get pollen data
+	restRouter.HandleFunc("/v2/weather", apiService.GetCalendar).Methods("POST")  // Get weather data
+	restRouter.HandleFunc("/v2/zipgeo", apiService.GetCalendar).Methods("POST")   // Get zipgeo data
 
 	//	SWAGGER ROUTES
-	restRouter.PathPrefix("/v1/swagger").Handler(httpSwagger.WrapHandler)
+	restRouter.PathPrefix("/v2/swagger").Handler(httpSwagger.WrapHandler)
 
 	//	Start the service and display how to access it
 	go func() {
-		zlog.Infow("Started REST service")
+		zlog.Infow("Started REST service",
+			"server", viper.GetString("server.bind"),
+			"port", viper.GetString("server.port"),
+		)
 		zlog.Errorw("API service error",
 			"error", http.ListenAndServe(viper.GetString("server.bind")+":"+viper.GetString("server.port"), restRouter),
 		)
