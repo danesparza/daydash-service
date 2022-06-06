@@ -12,7 +12,7 @@ var (
 	rootlogger *zap.Logger
 	zlog       *zap.SugaredLogger
 	NRLicense  = "Unknown"
-	NRAppName  = "Daydash-service"
+	NRAppName  = "api-v2.daydash.net"
 	NRApp      = &newrelic.Application{}
 )
 

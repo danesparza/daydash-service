@@ -18,9 +18,6 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-var NRLicense = "Unknown"
-var NRAppName = "Dashboard"
-
 // serveCmd represents the serve command
 var serveCmd = &cobra.Command{
 	Use:   "start",
@@ -47,7 +44,7 @@ func start(cmd *cobra.Command, args []string) {
 	zlog.Infow(
 		"Starting up",
 		"loglevel", loglevel,
-		"nrAppName", NRAppName,
+		"nrAppName", telemetry.NRAppName,
 	)
 
 	//	Create an api service object
