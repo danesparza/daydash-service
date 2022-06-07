@@ -1,0 +1,90 @@
+package api
+
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"time"
+
+	"github.com/newrelic/go-agent/v3/newrelic"
+)
+
+// PollenReport represents the report of pollen data
+type PollenReport struct {
+	Location          string    `json:"location"`           // The location for the report
+	Zipcode           string    `json:"zip"`                // The zipcode for the report
+	PredominantPollen string    `json:"predominant_pollen"` // The predominant pollen in the report period
+	StartDate         time.Time `json:"startdate"`          // The start time for this report
+	Data              []float64 `json:"data"`               //	Pollen data indices -- one for today and each future day
+	ReportingService  string    `json:"service"`            // The reporting service
+	Version           string    `json:"version"`            // Service version information
+}
+
+type PollenRequest struct {
+	Zipcode string `json:"zipcode"`
+}
+
+// PollenService is the interface for all services that can fetch pollen data
+type PollenService interface {
+	// GetPollenReport gets the pollen report
+	GetPollenReport(ctx context.Context, zipcode string) (PollenReport, error)
+}
+
+// GetPollenReport calls all services in parallel and returns the first result
+func (s Service) GetPollenReport(rw http.ResponseWriter, req *http.Request) {
+
+	ch := make(chan PollenReport, 1)
+
+	txn := newrelic.FromContext(req.Context())
+	defer txn.StartSegment("Pollen GetPollenReport").End()
+
+	//	Parse the request
+	request := PollenRequest{}
+	err := json.NewDecoder(req.Body).Decode(&request)
+	if err != nil {
+		zlog.Errorw(
+			"Problem decoding request",
+			"error", err,
+		)
+		txn.NoticeError(err)
+		sendErrorResponse(rw, err, http.StatusBadRequest)
+		return
+	}
+
+	//	Set the services to call with
+	services := []PollenService{
+		NasacortService{},
+		PollencomService{},
+	}
+
+	//	For each passed service ...
+	for _, service := range services {
+
+		//	Launch a goroutine for each service...
+		go func(c context.Context, s PollenService, zip string) {
+
+			//	Get its pollen report ...
+			result, err := s.GetPollenReport(c, zip)
+
+			//	As long as we don't have an error, return what we found on the result channel
+			if err == nil {
+
+				//	Make sure we also have more than one datapoint!
+				if len(result.Data) > 1 {
+					select {
+					case ch <- result:
+					default:
+					}
+				}
+			}
+		}(req.Context(), service, request.Zipcode)
+
+	}
+
+	//	Capture the first result passed on the channel
+	retval := <-ch
+
+	//	Serialize to JSON & return the response:
+	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
+	json.NewEncoder(rw).Encode(retval)
+}

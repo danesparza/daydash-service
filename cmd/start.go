@@ -67,7 +67,7 @@ func start(cmd *cobra.Command, args []string) {
 	restRouter.HandleFunc("/v2/calendar", apiService.GetCalendar).Methods("POST")    // Get calendar data
 	restRouter.HandleFunc("/v2/mapimage", apiService.GetCalendar).Methods("POST")    // Get map data
 	restRouter.HandleFunc("/v2/news", apiService.GetNewsReport).Methods("GET")       // Get news data
-	restRouter.HandleFunc("/v2/pollen", apiService.GetCalendar).Methods("POST")      // Get pollen data
+	restRouter.HandleFunc("/v2/pollen", apiService.GetPollenReport).Methods("POST")  // Get pollen data
 	restRouter.HandleFunc("/v2/weather", apiService.GetCalendar).Methods("POST")     // Get weather data
 	restRouter.HandleFunc("/v2/zipgeo", apiService.GetCalendar).Methods("POST")      // Get zipgeo data
 
