@@ -37,7 +37,7 @@ type CalendarEvent struct {
 func (s Service) GetCalendar(rw http.ResponseWriter, req *http.Request) {
 
 	txn := newrelic.FromContext(req.Context())
-	defer txn.StartSegment("CalService GetTodaysEvents").End()
+	defer txn.StartSegment("Calendar GetCalendar").End()
 
 	//	Our return value
 	retval := CalendarResponse{}
@@ -48,9 +48,10 @@ func (s Service) GetCalendar(rw http.ResponseWriter, req *http.Request) {
 	err := json.NewDecoder(req.Body).Decode(&request)
 	if err != nil {
 		zlog.Errorw(
-			"Problem decoding config set request",
+			"Problem decoding request",
 			"error", err,
 		)
+		txn.NoticeError(err)
 		sendErrorResponse(rw, err, http.StatusBadRequest)
 		return
 	}
@@ -66,7 +67,9 @@ func (s Service) GetCalendar(rw http.ResponseWriter, req *http.Request) {
 		zlog.Errorw(
 			"Error setting location from the timezone - most likely timezone data not loaded in host OS",
 			"timezone", timezone,
+			"error", err,
 		)
+		txn.NoticeError(err)
 	}
 
 	//	Current time in the location
@@ -90,11 +93,11 @@ func (s Service) GetCalendar(rw http.ResponseWriter, req *http.Request) {
 	//	First, get the ical calendar at the url given
 	clientRequest, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		txn.NoticeError(err)
 		zlog.Errorw(
 			"problem creating request to the ical url given",
 			"err", err,
 		)
+		txn.NoticeError(err)
 		return
 	}
 
@@ -107,11 +110,11 @@ func (s Service) GetCalendar(rw http.ResponseWriter, req *http.Request) {
 	client.Transport = newrelic.NewRoundTripper(client.Transport)
 	calendarDataResponse, err := ctxhttp.Do(req.Context(), client, clientRequest)
 	if err != nil {
-		txn.NoticeError(err)
 		zlog.Errorw(
 			"error when sending request to get the calendar data from the url",
 			"err", err,
 		)
+		txn.NoticeError(err)
 		return
 	}
 	defer calendarDataResponse.Body.Close()
@@ -126,6 +129,7 @@ func (s Service) GetCalendar(rw http.ResponseWriter, req *http.Request) {
 			"end", end,
 			"location", location,
 		)
+		txn.NoticeError(err)
 		return
 	}
 

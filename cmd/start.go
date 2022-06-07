@@ -63,13 +63,13 @@ func start(cmd *cobra.Command, args []string) {
 	restRouter.Use(nrgorilla.Middleware(telemetry.NRApp))
 
 	//	DATA ROUTES
-	restRouter.HandleFunc("/v2/alerts", apiService.GetCalendar).Methods("POST")   // Get weather alerts data
-	restRouter.HandleFunc("/v2/calendar", apiService.GetCalendar).Methods("POST") // Get calendar data
-	restRouter.HandleFunc("/v2/mapimage", apiService.GetCalendar).Methods("POST") // Get map data
-	restRouter.HandleFunc("/v2/news", apiService.GetCalendar).Methods("POST")     // Get news data
-	restRouter.HandleFunc("/v2/pollen", apiService.GetCalendar).Methods("POST")   // Get pollen data
-	restRouter.HandleFunc("/v2/weather", apiService.GetCalendar).Methods("POST")  // Get weather data
-	restRouter.HandleFunc("/v2/zipgeo", apiService.GetCalendar).Methods("POST")   // Get zipgeo data
+	restRouter.HandleFunc("/v2/alerts", apiService.GetWeatherAlerts).Methods("POST") // Get weather alerts data
+	restRouter.HandleFunc("/v2/calendar", apiService.GetCalendar).Methods("POST")    // Get calendar data
+	restRouter.HandleFunc("/v2/mapimage", apiService.GetCalendar).Methods("POST")    // Get map data
+	restRouter.HandleFunc("/v2/news", apiService.GetNewsReport).Methods("GET")       // Get news data
+	restRouter.HandleFunc("/v2/pollen", apiService.GetCalendar).Methods("POST")      // Get pollen data
+	restRouter.HandleFunc("/v2/weather", apiService.GetCalendar).Methods("POST")     // Get weather data
+	restRouter.HandleFunc("/v2/zipgeo", apiService.GetCalendar).Methods("POST")      // Get zipgeo data
 
 	//	SWAGGER ROUTES
 	restRouter.PathPrefix("/v2/swagger").Handler(httpSwagger.WrapHandler)
