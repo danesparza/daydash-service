@@ -7,6 +7,7 @@ Group=root
 ExecStart=/usr/bin/daydash-service start --config=/etc/daydash-service/config.yaml
 Restart=on-failure
 RestartSec=5s
+# EnvironmentFile=/etc/daydash-service/dds.env
 
 [Install]
 WantedBy=multi-user.target
