@@ -8,8 +8,8 @@ import (
 	"syscall"
 	"time"
 
-	// _ "github.com/danesparza/daydash-service/docs" // swagger docs location
 	"github.com/danesparza/daydash-service/api"
+	_ "github.com/danesparza/daydash-service/docs" // swagger docs location
 	"github.com/danesparza/daydash-service/telemetry"
 	"github.com/gorilla/mux"
 	"github.com/newrelic/go-agent/v3/integrations/nrgorilla"

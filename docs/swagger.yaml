@@ -1,0 +1,478 @@
+basePath: /v2
+definitions:
+  api.AlertItem:
+    properties:
+      area_description:
+        description: Affected Area description
+        type: string
+      description:
+        description: Long description of the event
+        type: string
+      end:
+        description: Event end time
+        type: string
+      event:
+        description: Short event summary
+        type: string
+      headline:
+        description: Full headline description
+        type: string
+      sender:
+        description: Sender (email) of the event
+        type: string
+      sendername:
+        description: Sender name of the event
+        type: string
+      severity:
+        description: Severity of the event
+        type: string
+      start:
+        description: Event start time
+        type: string
+      urgency:
+        description: Urgency of the event
+        type: string
+    type: object
+  api.AlertReport:
+    properties:
+      alerts:
+        description: Active alerts
+        items:
+          $ref: '#/definitions/api.AlertItem'
+        type: array
+      alertsurl:
+        description: URL to see active alerts on the NWS website for the current NWS
+          zone
+        type: string
+      city:
+        description: City name
+        type: string
+      county:
+        description: National weather service county
+        type: string
+      latitude:
+        description: Latitude
+        type: number
+      longitude:
+        description: Longitude
+        type: number
+      state:
+        description: State name
+        type: string
+      version:
+        description: Service version
+        type: string
+    type: object
+  api.AlertsRequest:
+    properties:
+      lat:
+        type: string
+      long:
+        type: string
+    type: object
+  api.CalendarEvent:
+    properties:
+      description:
+        description: Event long description
+        type: string
+      endtime:
+        description: Event end time
+        type: string
+      starttime:
+        description: Event start time
+        type: string
+      summary:
+        description: Event summary
+        type: string
+      uid:
+        description: Unique event id
+        type: string
+    type: object
+  api.CalendarRequest:
+    properties:
+      timezone:
+        type: string
+      url:
+        type: string
+    type: object
+  api.CalendarResponse:
+    properties:
+      currentlocaltime:
+        description: 'Sanity check:  Current local time in the timezone given'
+        type: string
+      events:
+        description: The calendar events found
+        items:
+          $ref: '#/definitions/api.CalendarEvent'
+        type: array
+      timezone:
+        description: The timezone used
+        type: string
+      version:
+        description: Service version
+        type: string
+    type: object
+  api.ErrorResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  api.MapImageRequest:
+    properties:
+      lat:
+        type: number
+      long:
+        type: number
+      zoom:
+        type: integer
+    type: object
+  api.MapImageResponse:
+    properties:
+      image:
+        description: The map image (in base64 encoded data uri format)
+        type: string
+      lat:
+        type: number
+      long:
+        type: number
+      version:
+        description: Service version
+        type: string
+      zoom:
+        type: integer
+    type: object
+  api.MinuteDataPoint:
+    properties:
+      dt:
+        type: integer
+      precipitation:
+        type: number
+    type: object
+  api.NewsItem:
+    properties:
+      createtime:
+        type: integer
+      id:
+        type: string
+      mediadata:
+        type: string
+      mediaurl:
+        type: string
+      storyurl:
+        type: string
+      text:
+        type: string
+    type: object
+  api.NewsReport:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/api.NewsItem'
+        type: array
+      version:
+        type: string
+    type: object
+  api.PollenReport:
+    properties:
+      data:
+        description: Pollen data indices -- one for today and each future day
+        items:
+          type: number
+        type: array
+      location:
+        description: The location for the report
+        type: string
+      predominant_pollen:
+        description: The predominant pollen in the report period
+        type: string
+      service:
+        description: The reporting service
+        type: string
+      startdate:
+        description: The start time for this report
+        type: string
+      version:
+        description: Service version information
+        type: string
+      zip:
+        description: The zipcode for the report
+        type: string
+    type: object
+  api.PollenRequest:
+    properties:
+      zipcode:
+        type: string
+    type: object
+  api.WeatherDataBlock:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/api.WeatherDataPoint'
+        type: array
+      icon:
+        type: string
+      summary:
+        type: string
+    type: object
+  api.WeatherDataPoint:
+    properties:
+      apparentTemperature:
+        type: number
+      cloudCover:
+        type: number
+      humidity:
+        type: number
+      icon:
+        type: string
+      ozone:
+        type: number
+      precipAccumulation:
+        type: number
+      precipIntensity:
+        type: number
+      precipIntensityMax:
+        type: number
+      precipProbability:
+        type: number
+      precipType:
+        type: string
+      pressure:
+        type: number
+      summary:
+        type: string
+      temperature:
+        type: number
+      temperatureMax:
+        type: number
+      temperatureMin:
+        type: number
+      time:
+        type: integer
+      uvindex:
+        type: number
+      visibility:
+        type: number
+      windBearing:
+        type: number
+      windGust:
+        type: number
+      windSpeed:
+        type: number
+    type: object
+  api.WeatherReport:
+    properties:
+      apicalls:
+        type: integer
+      code:
+        type: integer
+      currently:
+        $ref: '#/definitions/api.WeatherDataPoint'
+      daily:
+        $ref: '#/definitions/api.WeatherDataBlock'
+      hourly:
+        items:
+          $ref: '#/definitions/api.WeatherDataPoint'
+        type: array
+      latitude:
+        type: number
+      longitude:
+        type: number
+      minutely:
+        items:
+          $ref: '#/definitions/api.MinuteDataPoint'
+        type: array
+      version:
+        type: string
+    type: object
+  api.WeatherRequest:
+    properties:
+      lat:
+        type: string
+      long:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: REST API gateway for daydash dashboard display
+  license:
+    name: MIT
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: daydash-service
+  version: "1.0"
+paths:
+  /alerts:
+    post:
+      consumes:
+      - application/json
+      description: Gets the weather alerts for the area specified
+      parameters:
+      - description: The location to get alerts for
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/api.AlertsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.AlertReport'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Gets the weather alerts for the area specified
+      tags:
+      - dashboard
+  /calendar:
+    post:
+      consumes:
+      - application/json
+      description: Gets today's calendar data for the given iCal url and timezone
+      parameters:
+      - description: The calendar data to fetch
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/api.CalendarRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.CalendarResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Gets today's calendar data for the given iCal url and timezone
+      tags:
+      - dashboard
+  /mapimage:
+    post:
+      consumes:
+      - application/json
+      description: Gets a map image for the given lat, long and zoom level. Returns
+        the map image as a base64 encoded jpeg
+      parameters:
+      - description: The calendar data to fetch
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/api.MapImageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.MapImageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Gets a map image for the given lat, long and zoom level
+      tags:
+      - dashboard
+  /news:
+    get:
+      consumes:
+      - application/json
+      description: Gets breaking news from CNN.  Images are included inline as base64
+        encoded jpeg images
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.NewsReport'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Gets breaking news from CNN
+      tags:
+      - dashboard
+  /pollen:
+    post:
+      consumes:
+      - application/json
+      description: Gets pollen data and forecast for a given location
+      parameters:
+      - description: The location to get data for
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/api.PollenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.PollenReport'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Gets pollen data and forecast for a given location
+      tags:
+      - dashboard
+  /weather:
+    post:
+      consumes:
+      - application/json
+      description: Gets the current and forecasted weather for the given location
+      parameters:
+      - description: The location to fetch data for
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/api.WeatherRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.WeatherReport'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Gets the current and forecasted weather for the given location
+      tags:
+      - dashboard
+swagger: "2.0"

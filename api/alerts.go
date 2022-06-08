@@ -143,7 +143,17 @@ type AlertItem struct {
 	End             time.Time `json:"end"`              // Event end time
 }
 
-// GetWeatherReport gets the weather report
+// GetWeatherAlerts godoc
+// @Summary Gets the weather alerts for the area specified
+// @Description Gets the weather alerts for the area specified
+// @Tags dashboard
+// @Accept  json
+// @Produce  json
+// @Param config body api.AlertsRequest true "The location to get alerts for"
+// @Success 200 {object} api.AlertReport
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
+// @Router /alerts [post]
 func (s Service) GetWeatherAlerts(rw http.ResponseWriter, req *http.Request) {
 
 	txn := newrelic.FromContext(req.Context())

@@ -91,7 +91,16 @@ type NewsService interface {
 	GetNewsReport(ctx context.Context) (NewsReport, error)
 }
 
-// GetNewsReport gets breaking news from CNN
+// GetNewsReport godoc
+// @Summary Gets breaking news from CNN
+// @Description Gets breaking news from CNN.  Images are included inline as base64 encoded jpeg images
+// @Tags dashboard
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} api.NewsReport
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
+// @Router /news [get]
 func (s Service) GetNewsReport(rw http.ResponseWriter, req *http.Request) {
 
 	txn := newrelic.FromContext(req.Context())

@@ -33,7 +33,17 @@ type CalendarEvent struct {
 	EndTime     time.Time `json:"endtime"`     // Event end time
 }
 
-// GetTodaysEvents gets today's events from the given ical calendar url and the timezone.
+// GetCalendar godoc
+// @Summary Gets today's calendar data for the given iCal url and timezone
+// @Description Gets today's calendar data for the given iCal url and timezone
+// @Tags dashboard
+// @Accept  json
+// @Produce  json
+// @Param config body api.CalendarRequest true "The calendar data to fetch"
+// @Success 200 {object} api.CalendarResponse
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
+// @Router /calendar [post]
 func (s Service) GetCalendar(rw http.ResponseWriter, req *http.Request) {
 
 	txn := newrelic.FromContext(req.Context())
@@ -70,6 +80,8 @@ func (s Service) GetCalendar(rw http.ResponseWriter, req *http.Request) {
 			"error", err,
 		)
 		txn.NoticeError(err)
+		sendErrorResponse(rw, err, http.StatusInternalServerError)
+		return
 	}
 
 	//	Current time in the location
@@ -98,6 +110,7 @@ func (s Service) GetCalendar(rw http.ResponseWriter, req *http.Request) {
 			"err", err,
 		)
 		txn.NoticeError(err)
+		sendErrorResponse(rw, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -115,6 +128,7 @@ func (s Service) GetCalendar(rw http.ResponseWriter, req *http.Request) {
 			"err", err,
 		)
 		txn.NoticeError(err)
+		sendErrorResponse(rw, err, http.StatusInternalServerError)
 		return
 	}
 	defer calendarDataResponse.Body.Close()
@@ -130,6 +144,7 @@ func (s Service) GetCalendar(rw http.ResponseWriter, req *http.Request) {
 			"location", location,
 		)
 		txn.NoticeError(err)
+		sendErrorResponse(rw, err, http.StatusInternalServerError)
 		return
 	}
 

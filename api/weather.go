@@ -178,6 +178,17 @@ type OpenWeatherResponse struct {
 	} `json:"alerts"`
 }
 
+// GetWeatherReport godoc
+// @Summary Gets the current and forecasted weather for the given location
+// @Description Gets the current and forecasted weather for the given location
+// @Tags dashboard
+// @Accept  json
+// @Produce  json
+// @Param config body api.WeatherRequest true "The location to fetch data for"
+// @Success 200 {object} api.WeatherReport
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
+// @Router /weather [post]
 func (s Service) GetWeatherReport(rw http.ResponseWriter, req *http.Request) {
 
 	txn := newrelic.FromContext(req.Context())

@@ -30,7 +30,17 @@ type PollenService interface {
 	GetPollenReport(ctx context.Context, zipcode string) (PollenReport, error)
 }
 
-// GetPollenReport calls all services in parallel and returns the first result
+// GetPollenReport godoc
+// @Summary Gets pollen data and forecast for a given location
+// @Description Gets pollen data and forecast for a given location
+// @Tags dashboard
+// @Accept  json
+// @Produce  json
+// @Param config body api.PollenRequest true "The location to get data for"
+// @Success 200 {object} api.PollenReport
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
+// @Router /pollen [post]
 func (s Service) GetPollenReport(rw http.ResponseWriter, req *http.Request) {
 
 	ch := make(chan PollenReport, 1)

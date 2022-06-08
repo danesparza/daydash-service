@@ -27,8 +27,17 @@ type MapImageResponse struct {
 	Version string  `json:"version"` // Service version
 }
 
-// GetMapImageForCoordinates gets a map image for the given lat, long and zoom level
-// returns the map image as a base64 encoded jpeg
+// GetMapImageForCoordinates godoc
+// @Summary Gets a map image for the given lat, long and zoom level
+// @Description Gets a map image for the given lat, long and zoom level. Returns the map image as a base64 encoded jpeg
+// @Tags dashboard
+// @Accept  json
+// @Produce  json
+// @Param config body api.MapImageRequest true "The calendar data to fetch"
+// @Success 200 {object} api.MapImageResponse
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
+// @Router /mapimage [post]
 func (s Service) GetMapImageForCoordinates(rw http.ResponseWriter, req *http.Request) {
 
 	txn := newrelic.FromContext(req.Context())
