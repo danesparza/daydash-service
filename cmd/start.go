@@ -69,7 +69,7 @@ func start(cmd *cobra.Command, args []string) {
 	restRouter.HandleFunc("/v2/news", apiService.GetNewsReport).Methods("GET")                  // Get news data
 	restRouter.HandleFunc("/v2/pollen", apiService.GetPollenReport).Methods("POST")             // Get pollen data
 	restRouter.HandleFunc("/v2/weather", apiService.GetWeatherReport).Methods("POST")           // Get weather data
-	restRouter.HandleFunc("/v2/zipgeo", apiService.GetCalendar).Methods("POST")                 // Get zipgeo data
+	// restRouter.HandleFunc("/v2/zipgeo", apiService.GetCalendar).Methods("POST")                 // Get zipgeo data
 
 	//	SWAGGER ROUTES
 	restRouter.PathPrefix("/v2/swagger").Handler(httpSwagger.WrapHandler)
