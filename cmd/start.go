@@ -78,7 +78,7 @@ func start(cmd *cobra.Command, args []string) {
 
 	certManager := autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist("example.com", "www.example.com"),
+		HostPolicy: autocert.HostWhitelist("api.daydash.net", "api-v2.daydash.net"),
 		Cache:      autocert.DirCache("certs"),
 	}
 
