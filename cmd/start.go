@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"crypto/tls"
 	"net/http"
 	"os"
 	"os/signal"
@@ -16,6 +17,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	httpSwagger "github.com/swaggo/http-swagger"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 // serveCmd represents the serve command
@@ -74,24 +76,38 @@ func start(cmd *cobra.Command, args []string) {
 	//	SWAGGER ROUTES
 	restRouter.PathPrefix("/v2/swagger").Handler(httpSwagger.WrapHandler)
 
-	//	Start the service and display how to access it
+	//	Letsencrypt configuration
+	certManager := autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist("api.daydash.net", "api-v2.daydash.net"),
+		Cache:      autocert.DirCache("/etc/daydash-service/certs"),
+	}
+
+	server := &http.Server{
+		Addr:    ":https",
+		Handler: restRouter,
+		TLSConfig: &tls.Config{
+			GetCertificate: certManager.GetCertificate,
+		},
+	}
+
+	//	HTTP server
 	go func() {
 		zlog.Infow("Started REST service",
-			"server", viper.GetString("server.bind"),
-			"port", viper.GetString("server.port"),
+			"server", ":http",
 		)
-		zlog.Errorw("API service error",
-			"error", http.ListenAndServe(viper.GetString("server.bind")+":"+viper.GetString("server.port"), restRouter),
+		zlog.Errorw("HTTP API service error",
+			"error", http.ListenAndServe(":http", certManager.HTTPHandler(nil)),
 		)
 	}()
 
+	//	TLS server
 	go func() {
 		zlog.Infow("Started TLS REST service",
-			"server", viper.GetString("server.bind"),
-			"port", viper.GetString("server.port"),
+			"server", ":https",
 		)
-		zlog.Errorw("API service error",
-			"error", http.ListenAndServeTLS(":https", "/etc/daydash-service/server.crt", "/etc/daydash-service/server.key", restRouter),
+		zlog.Errorw("TLS API service error",
+			"error", server.ListenAndServeTLS("", ""), // Cert / key provided by letsencrypt
 		)
 	}()
 
