@@ -22,7 +22,6 @@ type CalendarResponse struct {
 	TimeZone         string          `json:"timezone"`         // The timezone used
 	CurrentLocalTime time.Time       `json:"currentlocaltime"` // Sanity check:  Current local time in the timezone given
 	Events           []CalendarEvent `json:"events"`           // The calendar events found
-	Version          string          `json:"version"`          // Service version
 }
 
 type CalendarEvent struct {
@@ -63,6 +62,12 @@ func (s Service) GetCalendar(rw http.ResponseWriter, req *http.Request) {
 		)
 		txn.NoticeError(err)
 		sendErrorResponse(rw, err, http.StatusBadRequest)
+		return
+	}
+
+	//	Make sure we have minimum args:
+	if request.CalendarURL == "" || request.Timezone == "" {
+		sendErrorResponse(rw, fmt.Errorf("you must include a valid url and timezone param"), http.StatusBadRequest)
 		return
 	}
 

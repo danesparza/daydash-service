@@ -3,11 +3,9 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/danesparza/daydash-service/version"
 	"github.com/spf13/cobra"
 )
-
-var BuildVersion = "Unknown"
-var CommitID string
 
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{
@@ -15,11 +13,11 @@ var versionCmd = &cobra.Command{
 	Short: "Shows the version information",
 	Run: func(cmd *cobra.Command, args []string) {
 		//	Show the version number
-		fmt.Printf("\nDashboard service version %s", BuildVersion)
+		fmt.Printf("\nDashboard service version %s", version.String())
 
 		//	Show the commitID if available:
-		if CommitID != "" {
-			fmt.Printf(" (%s)", CommitID[:7])
+		if version.CommitID != "" {
+			fmt.Printf(" (%s)", version.CommitID[:7])
 		}
 
 		//	Trailing space and newline

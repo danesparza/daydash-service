@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -17,7 +18,6 @@ type PollenReport struct {
 	StartDate         time.Time `json:"startdate"`          // The start time for this report
 	Data              []float64 `json:"data"`               //	Pollen data indices -- one for today and each future day
 	ReportingService  string    `json:"service"`            // The reporting service
-	Version           string    `json:"version"`            // Service version information
 }
 
 type PollenRequest struct {
@@ -58,6 +58,12 @@ func (s Service) GetPollenReport(rw http.ResponseWriter, req *http.Request) {
 		)
 		txn.NoticeError(err)
 		sendErrorResponse(rw, err, http.StatusBadRequest)
+		return
+	}
+
+	//	Make sure we have minimum args:
+	if request.Zipcode == "" {
+		sendErrorResponse(rw, fmt.Errorf("you must include a valid zipcode param"), http.StatusBadRequest)
 		return
 	}
 

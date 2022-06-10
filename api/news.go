@@ -22,8 +22,7 @@ import (
 
 // NewsReport defines a news report
 type NewsReport struct {
-	Items   NewsItems `json:"items"`
-	Version string    `json:"version"`
+	Items NewsItems `json:"items"`
 }
 
 // NewsItem represents a single news item

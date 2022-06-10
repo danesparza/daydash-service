@@ -5,7 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/danesparza/daydash-service/logger"
+	"github.com/danesparza/daydash-service/internal/logger"
+	"github.com/danesparza/daydash-service/version"
 	"go.uber.org/zap"
 )
 
@@ -50,4 +51,15 @@ func init() {
 	rootlogger, _ = logger.NewProd()
 	defer rootlogger.Sync() // flushes buffer, if any
 	zlog = rootlogger.Sugar()
+}
+
+// ApiVersionMiddleware adds the API version informaiton to the response header
+func ApiVersionMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		//	Include the version in the response headers:
+		rw.Header().Set(version.Header, version.String())
+
+		// Call the next handler, which can be another middleware in the chain, or the final handler.
+		next.ServeHTTP(rw, r)
+	})
 }

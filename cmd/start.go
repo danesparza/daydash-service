@@ -11,7 +11,7 @@ import (
 
 	"github.com/danesparza/daydash-service/api"
 	_ "github.com/danesparza/daydash-service/docs" // swagger docs location
-	"github.com/danesparza/daydash-service/telemetry"
+	"github.com/danesparza/daydash-service/internal/telemetry"
 	"github.com/gorilla/mux"
 	"github.com/newrelic/go-agent/v3/integrations/nrgorilla"
 	"github.com/spf13/cobra"
@@ -63,6 +63,7 @@ func start(cmd *cobra.Command, args []string) {
 	//	Create a router and setup our REST and UI endpoints...
 	restRouter := mux.NewRouter()
 	restRouter.Use(nrgorilla.Middleware(telemetry.NRApp))
+	restRouter.Use(api.ApiVersionMiddleware)
 
 	//	DATA ROUTES
 	restRouter.HandleFunc("/v2/alerts", apiService.GetWeatherAlerts).Methods("POST")            // Get weather alerts data
@@ -91,25 +92,37 @@ func start(cmd *cobra.Command, args []string) {
 		},
 	}
 
-	//	HTTP server
-	go func() {
-		zlog.Infow("Started REST service",
-			"server", ":http",
-		)
-		zlog.Errorw("HTTP API service error",
-			"error", http.ListenAndServe(":http", certManager.HTTPHandler(nil)),
-		)
-	}()
+	if viper.GetBool("server.httponly") {
+		//	HTTP server
+		go func() {
+			zlog.Infow("Started REST service (http only)",
+				"server", ":http",
+			)
+			zlog.Errorw("HTTP API service error",
+				"error", http.ListenAndServe(":http", restRouter),
+			)
+		}()
+	} else {
+		//	HTTP server
+		go func() {
+			zlog.Infow("Started REST service (redirects to TLS)",
+				"server", ":http",
+			)
+			zlog.Errorw("HTTP API service error",
+				"error", http.ListenAndServe(":http", certManager.HTTPHandler(nil)),
+			)
+		}()
 
-	//	TLS server
-	go func() {
-		zlog.Infow("Started TLS REST service",
-			"server", ":https",
-		)
-		zlog.Errorw("TLS API service error",
-			"error", server.ListenAndServeTLS("", ""), // Cert / key provided by letsencrypt
-		)
-	}()
+		//	TLS server
+		go func() {
+			zlog.Infow("Started TLS REST service",
+				"server", ":https",
+			)
+			zlog.Errorw("TLS API service error",
+				"error", server.ListenAndServeTLS("", ""), // Cert / key provided by letsencrypt
+			)
+		}()
+	}
 
 	//	Wait for our signal and shutdown gracefully
 	<-ctx.Done()

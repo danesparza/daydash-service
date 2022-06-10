@@ -3,7 +3,7 @@ package telemetry
 import (
 	"os"
 
-	"github.com/danesparza/daydash-service/logger"
+	"github.com/danesparza/daydash-service/internal/logger"
 	"github.com/newrelic/go-agent/v3/newrelic"
 	"go.uber.org/zap"
 )

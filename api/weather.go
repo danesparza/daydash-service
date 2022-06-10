@@ -20,7 +20,6 @@ type WeatherReport struct {
 	Minutely  []MinuteDataPoint  `json:"minutely"`
 	APICalls  int                `json:"apicalls"`
 	Code      int                `json:"code"`
-	Version   string             `json:"version"`
 }
 
 // WeatherDataBlock defines a group of data points
@@ -207,6 +206,12 @@ func (s Service) GetWeatherReport(rw http.ResponseWriter, req *http.Request) {
 		)
 		txn.NoticeError(err)
 		sendErrorResponse(rw, err, http.StatusBadRequest)
+		return
+	}
+
+	//	Make sure we have minimum args:
+	if request.Latitude == "" || request.Longitude == "" {
+		sendErrorResponse(rw, fmt.Errorf("you must include a valid lat and long param"), http.StatusBadRequest)
 		return
 	}
 

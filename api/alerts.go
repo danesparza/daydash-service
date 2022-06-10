@@ -126,7 +126,6 @@ type AlertReport struct {
 	NWSCounty                string      `json:"county"`    // National weather service county
 	ActiveAlertsForCountyURL string      `json:"alertsurl"` // URL to see active alerts on the NWS website for the current NWS zone
 	Alerts                   []AlertItem `json:"alerts"`    // Active alerts
-	Version                  string      `json:"version"`   // Service version
 }
 
 // AlertItem defines an individual alert item in a report
@@ -172,6 +171,12 @@ func (s Service) GetWeatherAlerts(rw http.ResponseWriter, req *http.Request) {
 			"error", err,
 		)
 		sendErrorResponse(rw, err, http.StatusBadRequest)
+		return
+	}
+
+	//	Make sure we have minimum args:
+	if request.Latitude == "" || request.Longitude == "" {
+		sendErrorResponse(rw, fmt.Errorf("you must include a valid lat and long param"), http.StatusBadRequest)
 		return
 	}
 

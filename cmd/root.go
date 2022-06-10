@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/danesparza/daydash-service/logger"
+	"github.com/danesparza/daydash-service/internal/logger"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -70,6 +70,7 @@ func initConfig() {
 
 	//	Set our defaults
 	viper.SetDefault("server.port", "80")
+	viper.SetDefault("server.httponly", false)
 	viper.SetDefault("server.allowed-origins", "*")
 	viper.SetDefault("log.level", "info")
 
