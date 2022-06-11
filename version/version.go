@@ -30,7 +30,7 @@ var Prerelease = "dev"
 var SemVer *version.Version
 
 func getFormattedVersion() string {
-	return fmt.Sprintf("%s.%v", Version, BuildNumber)
+	return fmt.Sprintf("%s.%s", Version, BuildNumber)
 }
 
 func init() {
@@ -46,5 +46,5 @@ func String() string {
 	if Prerelease != "" {
 		return fmt.Sprintf("%s-%s", getFormattedVersion(), Prerelease)
 	}
-	return Version
+	return getFormattedVersion()
 }
