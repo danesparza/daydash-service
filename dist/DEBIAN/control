@@ -1,5 +1,5 @@
 Package: daydash-service
-Version: 1.0.{build}
+Version: 1.1.{build}
 Architecture: amd64
 Maintainer: Dan Esparza <esparza.dan@gmail.com>
 Installed-Size: 4500
