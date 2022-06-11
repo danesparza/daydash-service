@@ -45,7 +45,7 @@ jobs:
 
       - run:
          name: Create binaries for all platforms
-         command: mkdir -p /tmp/binaries; gox -osarch="linux/amd64 darwin/amd64" -ldflags "-X $PACKAGE_PATH/version.BuildNumber=$CIRCLE_BUILD_NUM -X $PACKAGE_PATH/version.CommitID=$CIRCLE_SHA1 -X $PACKAGE_PATH/version.Prerelease=prod -X $PACKAGE_PATH/telemetry.NRLicense=${NR_DASHBOARD_LIC}" -output "/tmp/binaries/${CIRCLE_PROJECT_REPONAME}_{{.OS}}_{{.Arch}}" $PACKAGE_PATH/...
+         command: mkdir -p /tmp/binaries; gox -osarch="linux/amd64 darwin/amd64" -ldflags "-X $PACKAGE_PATH/version.BuildNumber=$CIRCLE_BUILD_NUM -X $PACKAGE_PATH/version.CommitID=$CIRCLE_SHA1 -X '$PACKAGE_PATH/version.Prerelease=${EMPTY_STRING}' -X $PACKAGE_PATH/telemetry.NRLicense=${NR_DASHBOARD_LIC}" -output "/tmp/binaries/${CIRCLE_PROJECT_REPONAME}_{{.OS}}_{{.Arch}}" $PACKAGE_PATH/...
       
       - run:
          name: Setup the debian package
