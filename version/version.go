@@ -14,7 +14,7 @@ import (
 var Version = "1.1"
 
 // The build number.  Set during build.  Empty for local dev
-var BuildNumber = 0
+var BuildNumber = "0"
 
 // The commit information.  Set during build.  Empty for local dev
 var CommitID string
