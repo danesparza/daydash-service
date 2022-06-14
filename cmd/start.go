@@ -2,13 +2,13 @@ package cmd
 
 import (
 	"context"
-	"crypto/tls"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/caddyserver/certmagic"
 	"github.com/danesparza/daydash-service/api"
 	_ "github.com/danesparza/daydash-service/docs" // swagger docs location
 	"github.com/danesparza/daydash-service/internal/telemetry"
@@ -17,7 +17,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	httpSwagger "github.com/swaggo/http-swagger"
-	"golang.org/x/crypto/acme/autocert"
 )
 
 // serveCmd represents the serve command
@@ -77,20 +76,10 @@ func start(cmd *cobra.Command, args []string) {
 	//	SWAGGER ROUTES
 	restRouter.PathPrefix("/v2/swagger").Handler(httpSwagger.WrapHandler)
 
-	//	Letsencrypt configuration
-	certManager := autocert.Manager{
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist("api.daydash.net", "api-v2.daydash.net"),
-		Cache:      autocert.DirCache("/etc/daydash-service/certs"),
-	}
-
-	server := &http.Server{
-		Addr:    ":https",
-		Handler: restRouter,
-		TLSConfig: &tls.Config{
-			GetCertificate: certManager.GetCertificate,
-		},
-	}
+	//	Letsencrypt handled by certmagic
+	certmagic.DefaultACME.Agreed = true
+	certmagic.DefaultACME.Email = "danesparza@cagedtornado.com"
+	certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
 
 	if viper.GetBool("server.httponly") {
 		//	HTTP server
@@ -103,23 +92,13 @@ func start(cmd *cobra.Command, args []string) {
 			)
 		}()
 	} else {
-		//	HTTP server
+		//	HTTP & HTTPS server
 		go func() {
-			zlog.Infow("Started REST service (redirects to TLS)",
-				"server", ":http",
-			)
-			zlog.Errorw("HTTP API service error",
-				"error", http.ListenAndServe(":http", certManager.HTTPHandler(nil)),
-			)
-		}()
-
-		//	TLS server
-		go func() {
-			zlog.Infow("Started TLS REST service",
+			zlog.Infow("Started REST service (http redirects to TLS)",
 				"server", ":https",
 			)
-			zlog.Errorw("TLS API service error",
-				"error", server.ListenAndServeTLS("", ""), // Cert / key provided by letsencrypt
+			zlog.Errorw("HTTP API service error",
+				"error", certmagic.HTTPS([]string{"api.daydash.net"}, restRouter),
 			)
 		}()
 	}

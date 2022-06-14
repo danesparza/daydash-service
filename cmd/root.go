@@ -17,6 +17,15 @@ var (
 	zlog       *zap.SugaredLogger
 )
 
+type fwdToZapWriter struct {
+	logger *zap.SugaredLogger
+}
+
+func (fw *fwdToZapWriter) Write(p []byte) (n int, err error) {
+	fw.logger.Errorw(string(p))
+	return len(p), nil
+}
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "daydash-service",
