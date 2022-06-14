@@ -12,7 +12,7 @@ jobs:
   build:
     working_directory: ~/repo
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.18
     environment:
       PACKAGE_PATH: "github.com/danesparza/daydash-service"
       DASH_TEST_ROOT: "/home/circleci/system.db"
