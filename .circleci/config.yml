@@ -27,14 +27,14 @@ jobs:
           command: echo 'export DEBIAN_PACKAGE_NAME="daydash-service-1.1.${CIRCLE_BUILD_NUM}"' >> $BASH_ENV 
       - run:
          name: Get compiler tool
-         command: go get github.com/mitchellh/gox
+         command: go install github.com/mitchellh/gox
 
       - run:
          name: Get release tool
-         command: go get github.com/tcnksm/ghr
+         command: go install github.com/tcnksm/ghr
       - run:
          name: Get utilities
-         command: go get github.com/danesparza/tokenreplace
+         command: go install github.com/danesparza/tokenreplace
       - run:
          name: Run tests
          command: |
