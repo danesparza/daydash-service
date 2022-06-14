@@ -79,7 +79,6 @@ func start(cmd *cobra.Command, args []string) {
 	//	Letsencrypt handled by certmagic
 	certmagic.DefaultACME.Agreed = true
 	certmagic.DefaultACME.Email = "danesparza@cagedtornado.com"
-	certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
 
 	if viper.GetBool("server.httponly") {
 		//	HTTP server
