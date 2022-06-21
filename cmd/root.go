@@ -81,6 +81,7 @@ func initConfig() {
 	viper.SetDefault("server.port", "80")
 	viper.SetDefault("server.httponly", false)
 	viper.SetDefault("server.allowed-origins", "*")
+	viper.SetDefault("news.mongodb", "")
 	viper.SetDefault("log.level", "info")
 
 	// If a config file is found, read it in

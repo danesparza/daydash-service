@@ -11,6 +11,7 @@ import (
 	"github.com/caddyserver/certmagic"
 	"github.com/danesparza/daydash-service/api"
 	_ "github.com/danesparza/daydash-service/docs" // swagger docs location
+	"github.com/danesparza/daydash-service/internal/news"
 	"github.com/danesparza/daydash-service/internal/telemetry"
 	"github.com/gorilla/mux"
 	"github.com/newrelic/go-agent/v3/integrations/nrgorilla"
@@ -75,6 +76,9 @@ func start(cmd *cobra.Command, args []string) {
 
 	//	SWAGGER ROUTES
 	restRouter.PathPrefix("/v2/swagger").Handler(httpSwagger.WrapHandler)
+
+	//	Start the background process
+	go news.NewsFetchTask(ctx)
 
 	//	Letsencrypt handled by certmagic
 	certmagic.DefaultACME.Agreed = true
