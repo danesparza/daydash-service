@@ -78,7 +78,12 @@ func start(cmd *cobra.Command, args []string) {
 	restRouter.PathPrefix("/v2/swagger").Handler(httpSwagger.WrapHandler)
 
 	//	Start the background process
-	go news.NewsFetchTask(ctx)
+	backgroundService := news.BackgroundNewsProcessor{
+		ProcessTweet: make(chan news.Tweet),
+	}
+
+	go backgroundService.NewsFetchTask(ctx)
+	go backgroundService.ProcessTweets(ctx)
 
 	//	Letsencrypt handled by certmagic
 	certmagic.DefaultACME.Agreed = true

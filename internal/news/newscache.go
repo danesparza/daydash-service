@@ -51,6 +51,11 @@ func TweetIDIsStored(id string) bool {
 
 // GetMostRecentTweetID returns the most recent tweetid (or blank, if there is a problem finding it)
 func GetMostRecentTweetID(ctx context.Context) string {
+
+	txn := newrelic.FromContext(ctx)
+	segment := txn.StartSegment("News GetMostRecentTweetID")
+	defer segment.End()
+
 	retval := ""
 	storedItemResponse := StoredNewsItem{}
 
@@ -65,10 +70,6 @@ func GetMostRecentTweetID(ctx context.Context) string {
 	}
 
 	collection = client.Database("dashboard").Collection("news")
-
-	txn := telemetry.NRApp.StartTransaction("GetMostRecentTweetID")
-	defer txn.End()
-	ctx = newrelic.NewContext(ctx, txn)
 
 	//	First, find the item that has the most recent update(s)
 	filter := bson.D{{}}
