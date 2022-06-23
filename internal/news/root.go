@@ -15,22 +15,15 @@ var (
 	zlog       *zap.SugaredLogger
 )
 
-// BackgroundNewsProcessor encapsulates background processing operations for the news
-type BackgroundNewsProcessor struct {
-
-	// ProcessTweet signals a tweet to be processed
-	ProcessTweet chan Tweet
-}
-
-// NewsFetchTask manages fetching & passing tweets to the tweet processor as they appear
+// NewsFetchTask manages fetching & storing news items as they appear
 // in the twitter news feed
-func (bnp BackgroundNewsProcessor) NewsFetchTask(ctx context.Context) {
+func NewsFetchTask(ctx context.Context) {
 
 	zlog.Infof("NewsFetchTask starting... ")
 
 	for {
 		select {
-		case <-time.After(10 * time.Second):
+		case <-time.After(10 * time.Minute):
 			//	As we get a request on a channel to fire a trigger...
 			//	Create a goroutine
 			go func(cx context.Context) {
@@ -52,58 +45,64 @@ func (bnp BackgroundNewsProcessor) NewsFetchTask(ctx context.Context) {
 					return
 				}
 
-				//	Pass the latest tweets to a channel
+				//	Process the tweets that we found based on the story
+				//	url that is associated with the tweet
 				for _, tweet := range tweetsResponse {
-					bnp.ProcessTweet <- tweet
-				}
 
-				//	Create a worker channel for:
-				//	- Reviewing latest tweets
-				//	- Seeing if we have a record of a tweet already, first
-				//	- If we don't have a record... (send this to a channel so we can do this?)
-				//	-- Fetch the url for the story (capture the long url, minus the querystring)
-				//	-- Process the main image for the story
-				//	-- Save the new story and update information
+					//	See if we have a record of the update already (based on the tweetid)
+					//	If we find one, discard the tweet.  We don't need it.  Go to the next one.
+					if story := GetStoryForUpdateID(cx, tweet.ID); story.URL != "" {
+						continue
+					}
+
+					//	If we can't find an update, move to plan B:
+					//	For each tweet
+					//	- Get the full url for the short url
+					//	- Get the image and smart crop it / base64 encode the data
+					metaInfo, _ := GetStoryAndImageUrl(cx, tweet.Entities.Urls[0].URL)
+
+					//	See if we have a matching story
+					//	-- See if that url exists already as a story
+					//  --> metaInfo.LongUrl
+					currentStory := GetStoryForUrl(cx, metaInfo.LongUrl)
+
+					//	If we don't have the story, create one
+					if currentStory.URL == "" {
+						//	Just use the current story and update all details
+						currentStory = NewsStory{
+							URL:      metaInfo.LongUrl,
+							ShortURL: metaInfo.ShortUrl,
+							Updates: []NewsStoryUpdate{{
+								ID:        tweet.ID,
+								Text:      tweet.Text, // Need to remove the url from the text
+								Time:      int(tweet.CreatedAt.UTC().Unix()),
+								Mediaurl:  metaInfo.ImageUrl,
+								Mediadata: metaInfo.ImageData,
+							}},
+						}
+
+						//	Add the story
+						zlog.Infof("Adding story for tweetID: %v", tweet.ID)
+						AddNewsStory(cx, currentStory)
+					} else {
+						//	If we already have the story, add an update
+						currentStory.Updates = append(currentStory.Updates, NewsStoryUpdate{
+							ID:        tweet.ID,
+							Text:      tweet.Text,
+							Time:      int(tweet.CreatedAt.UTC().Unix()),
+							Mediaurl:  metaInfo.ImageUrl,
+							Mediadata: metaInfo.ImageData,
+						})
+
+						//	Update the story
+						zlog.Infof("Updating story with tweetID: %v", tweet.ID)
+						UpdateNewsStory(cx, currentStory)
+					}
+				}
 
 			}(ctx) // Launch the goroutine
 		case <-ctx.Done():
 			zlog.Infof("NewsFetchTask stopping")
-			return
-		}
-	}
-
-}
-
-// ProcessTweets manages processing & storing news items
-func (bnp BackgroundNewsProcessor) ProcessTweets(ctx context.Context) {
-
-	zlog.Infof("ProcessTweets starting... ")
-
-	for {
-		select {
-		case tweetRequest := <-bnp.ProcessTweet:
-			//	As we get a request on a channel to fire a trigger...
-			//	Create a goroutine
-			go func(cx context.Context) {
-				//	Start a background transaction
-				txn := telemetry.NRApp.StartTransaction("ProcessTweets")
-				defer txn.End()
-
-				//	Add it to the context
-				cx = newrelic.NewContext(cx, txn)
-
-				zlog.Infof("Process tweet (ID): (%v) - %v", tweetRequest.ID, tweetRequest.Text)
-
-				//	This worker should
-				//	- See if we have a record of the tweet already, first
-				//	- If we don't have a record...
-				//	-- Fetch the url for the story (capture the long url, minus the querystring)
-				//	-- Process the main image for the story
-				//	-- Save the new story and update information
-
-			}(ctx) // Launch the goroutine
-		case <-ctx.Done():
-			zlog.Infof("ProcessTweets stopping")
 			return
 		}
 	}

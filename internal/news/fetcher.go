@@ -53,6 +53,21 @@ type Tweet struct {
 	ID string `json:"id"`
 }
 
+// StoryMeta represents information gathered for a story from the url in the tweet
+type StoryMeta struct {
+	// ShortUrl is the shortened url
+	ShortUrl string
+
+	// LongUrl is the full url without querystring
+	LongUrl string
+
+	// ImageUrl is the image in the twitter:image tag in the story url
+	ImageUrl string
+
+	// ImageData is the image data for the resized / cropped ImageUrl
+	ImageData string
+}
+
 // FetchTweets gets the latest tweets (from the given tweetID)
 func FetchTweets(ctx context.Context, sinceTweetID string) ([]Tweet, error) {
 
@@ -129,12 +144,20 @@ func FetchTweets(ctx context.Context, sinceTweetID string) ([]Tweet, error) {
 
 }
 
-// GetTwitterImageUrlFromPage gets the twitter:image meta content tag contents for the given page url
-// by fetching and parsing the page
-func GetTwitterImageUrlFromPage(txn *newrelic.Transaction, page string) (string, error) {
+// GetStoryAndImageUrl gets the full page url (without querystring) and
+//	the twitter:image meta content tag contents for the given page url
+// 	by fetching and parsing the page
+func GetStoryAndImageUrl(ctx context.Context, page string) (StoryMeta, error) {
+
+	txn := newrelic.FromContext(ctx)
+	segment := txn.StartSegment("News GetStoryAndImageUrl")
+	segment.AddAttribute("page", page)
+	defer segment.End()
 
 	//	Set the initial value
-	retval := ""
+	retval := StoryMeta{
+		ShortUrl: page,
+	}
 
 	//	Fetch the url:
 	req, err := http.NewRequest(http.MethodGet, page, nil)
@@ -164,6 +187,10 @@ func GetTwitterImageUrlFromPage(txn *newrelic.Transaction, page string) (string,
 		return retval, fmt.Errorf("error executing request to fetch url: %v", err)
 	}
 
+	//	Get the full url (without querystring):
+	res.Request.URL.RawQuery = ""
+	retval.LongUrl = res.Request.URL.String()
+
 	//	Read in the response
 	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
@@ -178,13 +205,25 @@ func GetTwitterImageUrlFromPage(txn *newrelic.Transaction, page string) (string,
 	// Find the meta item with the name 'twitter:image'
 	doc.Find("meta[property='og:image']").Each(func(i int, s *goquery.Selection) {
 		// For each item found, set the return value
-		retval = s.AttrOr("content", "")
+		retval.ImageUrl = s.AttrOr("content", "")
 	})
+
+	//	If we found an ImageUrl, resize/crop it and get the base64 encoded bytes
+	if retval.ImageUrl != "" {
+		b64resizedBytes, _ := GetResizedEncodedImage(ctx, retval.ImageUrl, 600, 300)
+		retval.ImageData = b64resizedBytes
+	}
 
 	return retval, nil
 }
 
-func getResizedEncodedImage(txn *newrelic.Transaction, imageUrl string, width, height int) (string, error) {
+// GetResizedEncodedImage resizes an image and returns it as a base64 encoded jpg
+func GetResizedEncodedImage(ctx context.Context, imageUrl string, width, height int) (string, error) {
+
+	txn := newrelic.FromContext(ctx)
+	segment := txn.StartSegment("News GetResizedEncodedImage")
+	segment.AddAttribute("imageUrl", imageUrl)
+	defer segment.End()
 
 	//	Our return value
 	retval := ""

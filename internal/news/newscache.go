@@ -10,6 +10,7 @@ import (
 	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -18,24 +19,27 @@ var (
 	collection *mongo.Collection
 )
 
-// StoredNewsItem represents a single news document in the news collection
-type StoredNewsItem struct {
-	ID struct {
-		Oid string `json:"$oid"` // Mongo document ID
-	} `json:"_id"`
-	URL      string `json:"url"`       // Full url without the querystring
-	ShortURL string `json:"short_url"` // Shortned url (useful for QR code generation)
-	Updates  []struct {
-		ID        string `json:"id"`        // Twitter id of the news update
-		Text      string `json:"text"`      // Text of the twitter update
-		Time      int    `json:"time"`      // Time of the update
-		Mediaurl  string `json:"mediaurl"`  // Url of the image used
-		Mediadata string `json:"mediadata"` // Base64 encoded resized and centered image
-	} `json:"updates"`
-	Entities []struct {
-		Type string `json:"type"` // Entity type (Person, Organization, Place)
-		Text string `json:"text"` // Entity text
-	} `json:"entities"`
+// NewsStory represents a single news document in the news collection
+type NewsStory struct {
+	ID       primitive.ObjectID `bson:"_id,omitempty"` // MongoDB ID
+	URL      string             `bson:"url"`           // Full url without the querystring
+	ShortURL string             `bson:"short_url"`     // Shortned url (useful for QR code generation)
+	Updates  []NewsStoryUpdate  `bson:"updates"`
+	Entities []NewsStoryEntity  `bson:"entities"`
+}
+
+// NewsStoryUpdate represents a news story update for a news item
+type NewsStoryUpdate struct {
+	ID        string `bson:"id"`        // Twitter id of the news update
+	Text      string `bson:"text"`      // Text of the twitter update
+	Time      int    `bson:"time"`      // Time of the update
+	Mediaurl  string `bson:"mediaurl"`  // Url of the image used
+	Mediadata string `bson:"mediadata"` // Base64 encoded resized and centered image
+}
+
+type NewsStoryEntity struct {
+	Type string `bson:"type"` // Entity type (Person, Organization, Place)
+	Text string `bson:"text"` // Entity text
 }
 
 // UpdateStoredNewsItems gets the latest news feed, matches on existing news story urls,
@@ -57,7 +61,7 @@ func GetMostRecentTweetID(ctx context.Context) string {
 	defer segment.End()
 
 	retval := ""
-	storedItemResponse := StoredNewsItem{}
+	storedItemResponse := NewsStory{}
 
 	//	Create a client & connect
 	clientOptions := options.Client().ApplyURI(viper.GetString("news.mongodb")).SetMonitor(nrmongo.NewCommandMonitor(nil))
@@ -95,19 +99,155 @@ func GetMostRecentTweetID(ctx context.Context) string {
 	return retval
 }
 
-// StoreNewsStoryUpdates takes a twitter feed and stores updates if the story/update doesn't already exist
-func StoreNewsStoryUpdates(ctx context.Context, tweets []Tweet) error {
+// GetStoryForUpdateID returns the story associated with a given udpate id (tweetid)
+func GetStoryForUpdateID(ctx context.Context, updateID string) NewsStory {
 
-	//	For each passed tweet
+	txn := newrelic.FromContext(ctx)
+	segment := txn.StartSegment("News GetStoryForTweetID")
+	defer segment.End()
 
-	//	See if
+	retval := NewsStory{}
+
+	//	Create a client & connect
+	clientOptions := options.Client().ApplyURI(viper.GetString("news.mongodb")).SetMonitor(nrmongo.NewCommandMonitor(nil))
+	client, err := mongo.Connect(ctx, clientOptions)
+	if err != nil {
+		zlog.Errorw("problem connecting to MongoDB",
+			"error", err,
+		)
+		return retval
+	}
+
+	collection = client.Database("dashboard").Collection("news")
+
+	//	First, find the item that has the updateID
+	filter := bson.D{{"updates.id", updateID}}
+	item := collection.FindOne(ctx, filter)
+
+	err = item.Decode(&retval)
+	if err != nil {
+		//	If we didn't get anything back, that's OK in this case.  Just get out
+		if err == mongo.ErrNoDocuments {
+			return retval
+		}
+
+		zlog.Errorw("problem decoding news item",
+			"error", err,
+		)
+	}
+
+	return retval
+}
+
+// GetStoryForUrl returns the story for a given story url
+func GetStoryForUrl(ctx context.Context, storyUrl string) NewsStory {
+
+	txn := newrelic.FromContext(ctx)
+	segment := txn.StartSegment("News GetStoryForUrl")
+	defer segment.End()
+
+	retval := NewsStory{}
+
+	//	Create a client & connect
+	clientOptions := options.Client().ApplyURI(viper.GetString("news.mongodb")).SetMonitor(nrmongo.NewCommandMonitor(nil))
+	client, err := mongo.Connect(ctx, clientOptions)
+	if err != nil {
+		zlog.Errorw("problem connecting to MongoDB",
+			"error", err,
+		)
+		return retval
+	}
+
+	collection = client.Database("dashboard").Collection("news")
+
+	//	First, find the item that has the updateID
+	filter := bson.D{{"url", storyUrl}}
+	item := collection.FindOne(ctx, filter)
+
+	err = item.Decode(&retval)
+	if err != nil {
+		//	If we didn't get anything back, that's OK in this case.  Just get out
+		if err == mongo.ErrNoDocuments {
+			return retval
+		}
+
+		//	Log everything else
+		zlog.Errorw("problem decoding news item",
+			"error", err,
+		)
+	}
+
+	return retval
+}
+
+// AddNewsStory updates a story
+func AddNewsStory(ctx context.Context, story NewsStory) error {
+
+	txn := newrelic.FromContext(ctx)
+	segment := txn.StartSegment("News AddNewsStory")
+	defer segment.End()
+
+	//	Create a client & connect
+	clientOptions := options.Client().ApplyURI(viper.GetString("news.mongodb")).SetMonitor(nrmongo.NewCommandMonitor(nil))
+	client, err := mongo.Connect(ctx, clientOptions)
+	if err != nil {
+		zlog.Errorw("problem connecting to MongoDB",
+			"error", err,
+		)
+		return err
+	}
+
+	collection = client.Database("dashboard").Collection("news")
+
+	_, err = collection.InsertOne(context.TODO(), story)
+	if err != nil {
+		zlog.Errorw("problem inserting to MongoDB",
+			"error", err,
+		)
+		return err
+	}
+
+	return nil
+}
+
+// UpdateNewsStory updates a story
+func UpdateNewsStory(ctx context.Context, story NewsStory) error {
+
+	txn := newrelic.FromContext(ctx)
+	segment := txn.StartSegment("News UpdateNewsStory")
+	defer segment.End()
+
+	//	Create a client & connect
+	clientOptions := options.Client().ApplyURI(viper.GetString("news.mongodb")).SetMonitor(nrmongo.NewCommandMonitor(nil))
+	client, err := mongo.Connect(ctx, clientOptions)
+	if err != nil {
+		zlog.Errorw("problem connecting to MongoDB",
+			"error", err,
+		)
+		return err
+	}
+
+	collection = client.Database("dashboard").Collection("news")
+
+	update := bson.M{
+		"$set": story,
+	}
+
+	filter := bson.D{{"_id", story.ID}}
+	_, err = collection.UpdateOne(context.TODO(), filter, update, nil)
+	if err != nil {
+		zlog.Errorw("problem updating MongoDB",
+			"error", err,
+		)
+		return err
+	}
 
 	return nil
 }
 
 // GetAllStoredNewsItems gets all stored news items in MongoDB.
-func GetAllStoredNewsItems(ctx context.Context) ([]StoredNewsItem, error) {
-	newsItems := []StoredNewsItem{}
+func GetAllStoredNewsItems(ctx context.Context) ([]NewsStory, error) {
+	newsItems := []NewsStory{}
 
 	//	Create a client & connect
 	clientOptions := options.Client().ApplyURI(viper.GetString("news.mongodb")).SetMonitor(nrmongo.NewCommandMonitor(nil))
@@ -132,7 +272,7 @@ func GetAllStoredNewsItems(ctx context.Context) ([]StoredNewsItem, error) {
 	defer cur.Close(ctx)
 
 	for cur.Next(ctx) {
-		var n StoredNewsItem
+		var n NewsStory
 		err := cur.Decode(&n)
 		if err != nil {
 			return nil, fmt.Errorf("problem decoding news item: %v", err)
