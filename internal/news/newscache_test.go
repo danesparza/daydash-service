@@ -1,17 +1,6 @@
 package news_test
 
-import (
-	"context"
-	"log"
-	"testing"
-	"time"
-
-	"github.com/danesparza/daydash-service/internal/news"
-	"github.com/mitchellh/go-homedir"
-	"github.com/spf13/viper"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-)
-
+/*
 func init() {
 	// Find home directory.
 	home, err := homedir.Dir()
@@ -150,3 +139,4 @@ func TestNewsCache_UpdateNewsStory_StoryUpdated(t *testing.T) {
 	}
 
 }
+*/

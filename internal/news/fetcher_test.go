@@ -1,12 +1,6 @@
 package news_test
 
-import (
-	"context"
-	"testing"
-
-	"github.com/danesparza/daydash-service/internal/news"
-)
-
+/*
 func TestFetchTweets_DoesNotReturnError(t *testing.T) {
 	ctx := context.TODO()
 
@@ -39,3 +33,4 @@ func TestGetStoryAndImageUrl_GetsFullUrlAndImage(t *testing.T) {
 	t.Logf("Image url: %v\n", metaInfo.ImageUrl)
 
 }
+*/
