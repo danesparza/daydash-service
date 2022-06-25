@@ -68,6 +68,17 @@ func NewsFetchTask(ctx context.Context) {
 
 					//	If we don't have the story, create one
 					if currentStory.URL == "" {
+
+						//	Gather entities for initial creation
+						newsEntities := []NewsStoryEntity{}
+						for _, item := range tweet.Entities.Annotations {
+							//	Add to our collection of entities
+							newsEntities = append(newsEntities, NewsStoryEntity{
+								Type: item.Type,
+								Text: item.NormalizedText,
+							})
+						}
+
 						//	Just use the current story and update all details
 						currentStory = NewsStory{
 							URL:      metaInfo.LongUrl,
@@ -79,6 +90,7 @@ func NewsFetchTask(ctx context.Context) {
 								Mediaurl:  metaInfo.ImageUrl,
 								Mediadata: metaInfo.ImageData,
 							}},
+							Entities: newsEntities,
 						}
 
 						//	Add the story
