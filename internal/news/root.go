@@ -24,7 +24,7 @@ func NewsFetchTask(ctx context.Context) {
 	for {
 		select {
 		case <-time.After(10 * time.Minute):
-			//	As we get a request on a channel to fire a trigger...
+			//	As we get a request on a channel ...
 			//	Create a goroutine
 			go func(cx context.Context) {
 				//	Start a background transaction
