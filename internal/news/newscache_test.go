@@ -1,15 +1,5 @@
 package news_test
 
-import (
-	"context"
-	"log"
-	"testing"
-
-	"github.com/danesparza/daydash-service/internal/news"
-	"github.com/mitchellh/go-homedir"
-	"github.com/spf13/viper"
-)
-
 // NewsReport defines a news report
 type NewsReport struct {
 	Items []NewsItem `json:"items"`
@@ -25,6 +15,7 @@ type NewsItem struct {
 	StoryURL   string `json:"storyurl"`
 }
 
+/*
 func init() {
 	// Find home directory.
 	home, err := homedir.Dir()
@@ -58,7 +49,7 @@ func TestNewsCache_GetAllNewsItems_DoesNotReturnError(t *testing.T) {
 	}
 }
 
-/*
+
 func TestNewsCache_GetMostRecentTweetID_GetsMostRecentTweet(t *testing.T) {
 	ctx := context.TODO()
 
