@@ -1,6 +1,30 @@
 package news_test
 
-/*
+import (
+	"context"
+	"log"
+	"testing"
+
+	"github.com/danesparza/daydash-service/internal/news"
+	"github.com/mitchellh/go-homedir"
+	"github.com/spf13/viper"
+)
+
+// NewsReport defines a news report
+type NewsReport struct {
+	Items []NewsItem `json:"items"`
+}
+
+// NewsItem represents a single news item
+type NewsItem struct {
+	ID         string `json:"id"`
+	CreateTime int64  `json:"createtime"`
+	Text       string `json:"text"`
+	MediaURL   string `json:"mediaurl"`
+	MediaData  string `json:"mediadata"`
+	StoryURL   string `json:"storyurl"`
+}
+
 func init() {
 	// Find home directory.
 	home, err := homedir.Dir()
@@ -21,7 +45,9 @@ func init() {
 func TestNewsCache_GetAllNewsItems_DoesNotReturnError(t *testing.T) {
 	ctx := context.Background()
 
-	newsItems, err := news.GetAllStoredNewsItems(ctx)
+	numberOfStories := 6
+
+	newsItems, err := news.GetRecentNewsStories(ctx, int64(numberOfStories))
 	if err != nil {
 		t.Errorf("Returned error and we didn't expect that: %v", err)
 	}
@@ -32,6 +58,7 @@ func TestNewsCache_GetAllNewsItems_DoesNotReturnError(t *testing.T) {
 	}
 }
 
+/*
 func TestNewsCache_GetMostRecentTweetID_GetsMostRecentTweet(t *testing.T) {
 	ctx := context.TODO()
 

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/danesparza/daydash-service/internal/telemetry"
 	"github.com/newrelic/go-agent/v3/integrations/nrmongo"
 	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/spf13/viper"
@@ -245,26 +244,29 @@ func UpdateNewsStory(ctx context.Context, story NewsStory) error {
 	return nil
 }
 
-// GetAllStoredNewsItems gets all stored news items in MongoDB.
-func GetAllStoredNewsItems(ctx context.Context) ([]NewsStory, error) {
-	newsItems := []NewsStory{}
+// GetRecentNewsStories gets recent stored news items in MongoDB.
+func GetRecentNewsStories(ctx context.Context, numberOfStories int64) ([]NewsStory, error) {
+	txn := newrelic.FromContext(ctx)
+	segment := txn.StartSegment("News GetRecentNewsStories")
+	defer segment.End()
+
+	retval := []NewsStory{}
 
 	//	Create a client & connect
 	clientOptions := options.Client().ApplyURI(viper.GetString("news.mongodb")).SetMonitor(nrmongo.NewCommandMonitor(nil))
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		return nil, fmt.Errorf("problem connecting to MongoDB: %v", err)
+		zlog.Errorw("problem connecting to MongoDB",
+			"error", err,
+		)
+		return retval, err
 	}
 
 	collection = client.Database("dashboard").Collection("news")
 
-	txn := telemetry.NRApp.StartTransaction("GetAllStoredNewsItems")
-	defer txn.End()
-	ctx = newrelic.NewContext(ctx, txn)
-
 	//	First, find all news items
 	filter := bson.D{{}}
-	opts := options.Find().SetSort(bson.D{{"updates.id", -1}})
+	opts := options.Find().SetSort(bson.D{{"updates.id", -1}}).SetLimit(numberOfStories)
 	cur, err := collection.Find(ctx, filter, opts)
 	if err != nil {
 		return nil, fmt.Errorf("problem finding items in dashboard.news: %v", err)
@@ -278,16 +280,16 @@ func GetAllStoredNewsItems(ctx context.Context) ([]NewsStory, error) {
 			return nil, fmt.Errorf("problem decoding news item: %v", err)
 		}
 
-		newsItems = append(newsItems, n)
+		retval = append(retval, n)
 	}
 
 	if err := cur.Err(); err != nil {
 		return nil, fmt.Errorf("problem navigating through the list of items: %v", err)
 	}
 
-	if len(newsItems) == 0 {
+	if len(retval) == 0 {
 		return nil, mongo.ErrNoDocuments
 	}
 
-	return newsItems, nil
+	return retval, nil
 }
