@@ -71,6 +71,7 @@ func GetMostRecentTweetID(ctx context.Context) string {
 		)
 		return retval
 	}
+	defer client.Disconnect(ctx)
 
 	collection = client.Database("dashboard").Collection("news")
 
@@ -116,6 +117,7 @@ func GetStoryForUpdateID(ctx context.Context, updateID string) NewsStory {
 		)
 		return retval
 	}
+	defer client.Disconnect(ctx)
 
 	collection = client.Database("dashboard").Collection("news")
 
@@ -156,6 +158,7 @@ func GetStoryForUrl(ctx context.Context, storyUrl string) NewsStory {
 		)
 		return retval
 	}
+	defer client.Disconnect(ctx)
 
 	collection = client.Database("dashboard").Collection("news")
 
@@ -195,6 +198,7 @@ func AddNewsStory(ctx context.Context, story NewsStory) error {
 		)
 		return err
 	}
+	defer client.Disconnect(ctx)
 
 	collection = client.Database("dashboard").Collection("news")
 
@@ -225,6 +229,7 @@ func UpdateNewsStory(ctx context.Context, story NewsStory) error {
 		)
 		return err
 	}
+	defer client.Disconnect(ctx)
 
 	collection = client.Database("dashboard").Collection("news")
 
@@ -261,6 +266,7 @@ func GetRecentNewsStories(ctx context.Context, numberOfStories int64) ([]NewsSto
 		)
 		return retval, err
 	}
+	defer client.Disconnect(ctx)
 
 	collection = client.Database("dashboard").Collection("news")
 
